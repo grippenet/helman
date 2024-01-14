@@ -31,7 +31,7 @@ func (h *HelmManager) resolveStage(target types.Target, stageName string) (types
 		if hasDefault {
 			return o, nil
 		} else {
-			return o, fmt.Errorf("Unknown stage '%s'", stageName)
+			return o, fmt.Errorf("unknown stage '%s'", stageName)
 		}
 	}
 	return o, nil
@@ -47,7 +47,7 @@ func (h *HelmManager) resolveChartOptions(target types.Target) types.TargetOptio
 func (h *HelmManager) ChartCommand(commandName string, name string, stageName string, extraArgs []string) (*Command, error) {
 	target, ok := h.config.Targets[name]
 	if !ok {
-		return nil, fmt.Errorf("unknown chart named '%s' in helman charts config", name)
+		return nil, fmt.Errorf("unknown target named '%s' in helman targets config", name)
 	}
 
 	opts := h.resolveChartOptions(target)
