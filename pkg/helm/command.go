@@ -8,12 +8,11 @@ import (
 // Command represents a Helm command line to be executed
 type Command struct {
 	CheckKubeContext string // KubeContext to check before applying command
-	Name             string
 	Args             []string
 }
 
-func NewCommand(name string, args []string) *Command {
-	return &Command{Name: name, Args: args}
+func NewCommand(args []string) *Command {
+	return &Command{Args: args}
 }
 
 func (c *Command) AddArg(args ...string) {
@@ -22,7 +21,6 @@ func (c *Command) AddArg(args ...string) {
 
 func (c *Command) String() string {
 	var b strings.Builder
-	b.WriteString(c.Name)
 	for _, a := range c.Args {
 		b.WriteString(" ")
 		b.WriteString(a)

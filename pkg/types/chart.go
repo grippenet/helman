@@ -1,8 +1,18 @@
 package types
 
+// ExtraArgs extra arguments to add to each command
+type ExtraArgs struct {
+	Install    []string `yaml:"install,omitempty" toml:"install,omitempty"`
+	Upgrade    []string `yaml:"upgrade,omitempty" toml:"upgrade,omitempty"`
+	Template   []string `yaml:"template,omitempty" toml:"template,omitempty"`
+	Diff       []string `yaml:"diff,omitempty" toml:"diff,omitempty"`
+	ShowValues []string `yaml:"show_values,omitempty" toml:"show_values,omitempty"`
+}
+
 type TargetOptions struct {
-	AtomicUpdate bool `yaml:"atomic" toml:"atomic"`
-	PassContext  bool `yaml:"pass_context" toml:"pass_context"` // Pass the context with --kube-context, if false just check the current context
+	AtomicUpdate bool      `yaml:"atomic" toml:"atomic"`
+	PassContext  bool      `yaml:"pass_context" toml:"pass_context"` // Pass the context with --kube-context, if false just check the current context
+	ExtraArgs    ExtraArgs `yaml:"extra_args,omitempty" toml:"extra_args,omitempty"`
 }
 
 type Target struct {
