@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -34,8 +35,31 @@ func loadFromFile(file string) (*types.Config, error) {
 	if err != nil {
 		return config, err
 	}
+
+	vars, err := resolveVars(config.Vars)
+	if err != nil {
+		return config, err
+	}
+	config.Vars = vars
+
 	config.File = file
 	return config, nil
+}
+
+func resolveVars(vars map[string]string) (map[string]string, error) {
+	out := make(map[string]string, len(vars))
+	for name, value := range vars {
+		if strings.HasPrefix(value, "env:") {
+			envName := value[5:]
+			envValue := os.Getenv(envName)
+			if envValue == "" {
+				return nil, fmt.Errorf("environment variable '%s' is not defined or empty for variable '%s'", envName, name)
+			}
+		} else {
+			out[name] = value
+		}
+	}
+	return out, nil
 }
 
 func fileExists(path string) (bool, error) {
