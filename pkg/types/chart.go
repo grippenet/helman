@@ -12,6 +12,7 @@ type ExtraArgs struct {
 type TargetOptions struct {
 	AtomicUpdate bool      `yaml:"atomic" toml:"atomic"`
 	PassContext  bool      `yaml:"pass_context" toml:"pass_context"` // Pass the context with --kube-context, if false just check the current context
+	AskForDryRun bool      `yaml:"ask_dry_run" toml:"ask_dry_run"`   // Ask to Run with --dry-run before
 	ExtraArgs    ExtraArgs `yaml:"extra_args,omitempty" toml:"extra_args,omitempty"`
 }
 
@@ -29,5 +30,6 @@ type Stage struct {
 }
 
 type StageOptions struct {
-	KubeContext string `yaml:"kube_context,omitempty" toml:"kube_context,omitempty"` // Expected kubecontext, will pass --kube-context if PassContext
+	KubeContext  string `yaml:"kube_context,omitempty" toml:"kube_context,omitempty"` // Expected kubecontext, will pass --kube-context if PassContext
+	AskForDryRun bool   `yaml:"ask_dry_run" toml:"ask_dry_run"`
 }

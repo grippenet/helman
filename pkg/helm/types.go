@@ -19,6 +19,7 @@ type Resolved struct {
 	KubeContext  string
 	PassContext  bool
 	AtomicUpdate bool
+	AskForDryRun bool
 }
 
 func (r *Resolved) Print() {
@@ -31,6 +32,8 @@ func (r *Resolved) Print() {
 		pass = "checking kube context"
 	}
 	fmt.Printf("KubeContext : %s (%s)\n", r.KubeContext, pass)
+	fmt.Printf("Ask for --dry-run : %t\n", r.AskForDryRun)
+
 	fmt.Println("Files:")
 	for _, file := range r.Files {
 		file.Print()

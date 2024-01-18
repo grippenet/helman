@@ -57,6 +57,7 @@ func (h *HelmManager) resolveStage(target types.Target, stageName string) (types
 		if o.KubeContext == "" {
 			o.KubeContext = defOpts.KubeContext
 		}
+		o.AskForDryRun = o.AskForDryRun || defOpts.AskForDryRun
 	}
 
 	if !ok {
@@ -98,18 +99,24 @@ func (h *HelmManager) ResolveCommand(commandName string, name string, stageName 
 		release = ""
 	}
 
-	resolved := &Resolved{
-		Command:      h.resolveHelmCommand(commandName),
-		Release:      release,
-		Chart:        target.Chart,
-		PassContext:  target.PassContext || h.config.Globals.PassContext,
-		AtomicUpdate: target.AtomicUpdate || h.config.Globals.AtomicUpdate,
-		KubeContext:  "",
+	needAskDryRun := false
+	if commandName == CommandInstall || commandName == CommandUpgrade {
+		needAskDryRun = true
 	}
 
 	stage, err := h.resolveStage(target, stageName)
 	if err != nil {
 		return nil, err
+	}
+
+	resolved := &Resolved{
+		Command:      h.resolveHelmCommand(commandName),
+		Release:      release,
+		Chart:        target.Chart,
+		AskForDryRun: needAskDryRun && (target.AskForDryRun || h.config.Globals.AskForDryRun || stage.AskForDryRun),
+		PassContext:  target.PassContext || h.config.Globals.PassContext,
+		AtomicUpdate: target.AtomicUpdate || h.config.Globals.AtomicUpdate,
+		KubeContext:  stage.KubeContext,
 	}
 
 	files := make([]ValueFile, 0, len(target.ValueFiles)+len(stage.ValueFiles))
@@ -188,6 +195,7 @@ func (h *HelmManager) CreateHelmCommand(resolved *Resolved) (*Command, error) {
 			cmd.CheckKubeContext = resolved.KubeContext
 		}
 	}
+	cmd.AskForDryRun = resolved.AskForDryRun
 
 	for _, arg := range resolved.ExtraArgs {
 		cmd.AddArg(arg.Arg)
