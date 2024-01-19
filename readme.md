@@ -29,6 +29,23 @@ If sub commands '-show' or '-config' is defined, the the command is not run with
 -config : show the config after all the files has been resolved for the target with the given stage. It will shown the real file named after variables
 have been replaced by their values and the different global/target/stage specific options merged. 
 
+Example
+
+Install a target named `grippenet` with the stage `dev`
+```bash
+helman install grippenet dev
+````
+
+If you want to see the command only
+```bash
+helman install -show grippenet dev
+````
+
+If you want to see how target config is resolved 
+```bash
+helman install -config grippenet dev
+```
+
 ## Configuration
 
 Helman configuration is a yaml file (toml is also possible).
@@ -36,11 +53,23 @@ Helman configuration is a yaml file (toml is also possible).
 Global config structure is
 
 ```yaml
+# Globale options for each stage (will be applied for all stage with this name, in all targets)
 stages: <stages_config>
-globals: <global_config>
+# Globals definition of target options (can be overriden in each target)
+globals: <target_options>
+# Variable you can use in files path specifications (${stage} is defined internally by the name of the requested stage)
 vars: <vars_config>
+# Targets definition
 targets: <targets_config>
 ```
+
+Some options are resolved by merging some sections of configurations
+
+Command options & arguments for a target named 'example' and stage 'prod' will be resolved by using
+.globals, targets.example, .stages.prod, .targets.example.stages.prod
+
+Files passed to helm will be resolved with target files + stage files
+
 
 ### stages_config
 defines global stage options (to be applied to all stages of all targets)
@@ -49,6 +78,8 @@ defines global stage options (to be applied to all stages of all targets)
  <stage_name>:
     # Kube context to apply for this stage name
     kube_context: my-context-name
+    # Ask for running the command with --dry-run before, only for install|upgrade
+    ask_dry_run: true
 ```
 
 For example, this defines the kube context to apply for 'prod' stage, for all targets
@@ -56,18 +87,6 @@ For example, this defines the kube context to apply for 'prod' stage, for all ta
 stages:
   prod:
     kube_context: prod-kube
-```
-
-### globals_config
- global options to use for all targets
-```yaml
-globals:
-  # if true kube_context will passed to helm using --kube-context option, if false, the current context will be checked to be this one 
-  # before running the command
-  pass_context: false
-  # Use Atomic, if true install/upgrade command will use --atomic option 
-  atomic: true
-  extra_args: <extra_args>
 ```
 
 ### vars_config
@@ -103,13 +122,17 @@ Each target has a common structure:
 
 ```yaml
 my-target:
+    # Specific target options (described in target_options)
+    <target_options>
+
     # Chart name or path to local chart 
     chart: /path/to/chart
     # Release name to use, if not defined, the target name is used
     release: myrelease
+
+    # List of files to include for all stages. It's up to you to define this list (helman doesnt force any organisation)
+    # It's possible to use a special variable ${stage}, it will be replaced by the stage name
     files:
-        # List of files to include for all stages. It's up to you to define this list (helman doesnt force any organisation)
-        # It's possible to use a special variable ${stage}, it will be replaced by the stage name
         - "/path/to/value/file.yaml"
         # Path using a variable named 'config' (defining the path for base config yaml files)
         # To use a variable you need to define `vars` at the global level (helman only provides ${stage})
@@ -124,9 +147,23 @@ my-target:
         prod:
             # Kube context to use. It's also possible to defined it at the global level so all stage with this name will use the same kube context.
             kube_context: my-prod-context
+            # If true Ask for running command with --dry-run before to run for good, only for install|upgrade
+            ask_dry_run: true
             files:
                 - /path/for/yaml/to/include/in/prod/only.yaml
                 # It's also possible to use variables in stage files
                 - ${config}/prod.yaml 
 
 ````
+
+### target_options (globals or in targets.[target])
+```yaml
+  # if true kube_context will passed to helm using --kube-context option, if false, the current context will be checked to be this one 
+  # before running the command
+  pass_context: false
+  # Use Atomic, if true install/upgrade command will use --atomic option 
+  atomic: true
+  # If true Ask for running command with --dry-run before to run for good, only for install|upgrade
+  ask_dry_run: true
+  extra_args: <extra_args>
+```
