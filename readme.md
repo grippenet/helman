@@ -144,11 +144,15 @@ my-target:
         - "${secrets}/${stage}.yaml"
     stages:
         # Stages allows to defined stage specific options or files
+        # Options can be defined for each stage or defined globally in stages.
+        # Global stage options are then used as default value.
         prod:
             # Kube context to use. It's also possible to defined it at the global level so all stage with this name will use the same kube context.
             kube_context: my-prod-context
             # If true Ask for running command with --dry-run before to run for good, only for install|upgrade
             ask_dry_run: true
+            # List of values files to add for this stage.
+            # Stage-specific value files are added after the target's ones.
             files:
                 - /path/for/yaml/to/include/in/prod/only.yaml
                 # It's also possible to use variables in stage files
