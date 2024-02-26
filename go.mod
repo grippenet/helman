@@ -1,6 +1,6 @@
 module github.com/grippenet/helman
 
-go 1.21.4
+go 1.21
 
 require (
 	github.com/c-bata/go-prompt v0.2.6 // indirect
