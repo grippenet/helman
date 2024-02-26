@@ -59,7 +59,6 @@ func (helmCmd *HelmCommand) RunE(cmd *cobra.Command, cmdArgs []string) error {
 	}
 
 	if op == OpRun {
-		fmt.Println("--Run")
 		return hc.Run()
 	}
 	return nil
@@ -89,11 +88,11 @@ func (helmCmd *HelmCommand) createCommand() *cobra.Command {
 }
 
 var HelmCommandTemplates = []*HelmCommand{
-	&HelmCommand{Name: helm.CommandInstall, Short: "`helm install` for the target & stage"},
-	&HelmCommand{Name: helm.CommandUpgrade, Short: "`helm upgrade` for a target & stage"},
-	&HelmCommand{Name: helm.CommandTemplate, Short: "`helm template` for a target & stage"},
-	&HelmCommand{Name: helm.CommandDiff, Short: "`helm diff upgrade` for a target & stage"},
-	&HelmCommand{Name: helm.CommandShowValues, Short: "`helm show values` for a target & stage"},
+	{Name: helm.CommandInstall, Short: "`helm install` for the target & stage"},
+	{Name: helm.CommandUpgrade, Short: "`helm upgrade` for a target & stage"},
+	{Name: helm.CommandTemplate, Short: "`helm template` for a target & stage"},
+	{Name: helm.CommandDiff, Short: "`helm diff upgrade` for a target & stage"},
+	{Name: helm.CommandShowValues, Short: "`helm show values` for a target & stage"},
 }
 
 //install|upgrade|template|verify|diff

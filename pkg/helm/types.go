@@ -20,9 +20,11 @@ type Resolved struct {
 	PassContext  bool
 	AtomicUpdate bool
 	AskForDryRun bool
+	Dir          string
 }
 
 func (r *Resolved) Print() {
+	fmt.Printf("Dir: %s\n", r.Dir)
 	fmt.Printf("Helm Commands: %v\n", r.Command)
 	fmt.Printf("Release : %s %s\n", r.Release, r.Chart)
 	var pass string

@@ -49,17 +49,30 @@ func loadFromFile(file string) (*types.Config, error) {
 func resolveVars(vars map[string]string) (map[string]string, error) {
 	out := make(map[string]string, len(vars))
 	for name, value := range vars {
-		if strings.HasPrefix(value, "env:") {
-			envName := value[5:]
-			envValue := os.Getenv(envName)
-			if envValue == "" {
-				return nil, fmt.Errorf("environment variable '%s' is not defined or empty for variable '%s'", envName, name)
+		if IsEnvVar(value) {
+			envValue, err := ParseEnvVar(value)
+			if err != nil {
+				return nil, err
 			}
+			out[name] = envValue
 		} else {
 			out[name] = value
 		}
 	}
 	return out, nil
+}
+
+func IsEnvVar(value string) bool {
+	return strings.HasPrefix(value, "env:")
+}
+
+func ParseEnvVar(value string) (string, error) {
+	envName := value[4:]
+	envValue := os.Getenv(envName)
+	if envValue == "" {
+		return "", fmt.Errorf("environment variable '%s' is not defined or empty for variable '%s'", envName, value)
+	}
+	return envValue, nil
 }
 
 func fileExists(path string) (bool, error) {
@@ -78,6 +91,7 @@ var defaultPaths = []string{"helman.yaml", "helman.toml"}
 func LoadConfig() (*types.Config, error) {
 	paths := make([]string, 0)
 	file := os.Getenv("HELMAN_CONFIG")
+	fmt.Println(file)
 	if file != "" {
 		paths = append(paths, file)
 	}

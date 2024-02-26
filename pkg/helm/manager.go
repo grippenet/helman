@@ -3,9 +3,11 @@ package helm
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 
+	cfgPkg "github.com/grippenet/helman/pkg/config"
 	"github.com/grippenet/helman/pkg/types"
 )
 
@@ -42,10 +44,12 @@ func createExtraArgs(commandName string, extra types.ExtraArgs, from string) []E
 
 type HelmManager struct {
 	config *types.Config
+	dir    string // Directory of the helman config file, all path are infered to be relative to it
 }
 
 func NewHelmManager(config *types.Config) *HelmManager {
-	return &HelmManager{config: config}
+	dir := filepath.Dir(config.File)
+	return &HelmManager{config: config, dir: dir}
 }
 
 // resolveStage resolve values, applying chart's options & globals if necessary
@@ -110,13 +114,13 @@ func (h *HelmManager) ResolveCommand(commandName string, name string, stageName 
 	}
 
 	resolved := &Resolved{
+		Dir:          h.dir,
 		Command:      h.resolveHelmCommand(commandName),
 		Release:      release,
 		Chart:        target.Chart,
 		AskForDryRun: needAskDryRun && (target.AskForDryRun || h.config.Globals.AskForDryRun || stage.AskForDryRun),
 		PassContext:  target.PassContext || h.config.Globals.PassContext,
 		AtomicUpdate: target.AtomicUpdate || h.config.Globals.AtomicUpdate,
-		KubeContext:  stage.KubeContext,
 	}
 
 	files := make([]ValueFile, 0, len(target.ValueFiles)+len(stage.ValueFiles))
@@ -124,6 +128,10 @@ func (h *HelmManager) ResolveCommand(commandName string, name string, stageName 
 	vars := copyVars(h.config.Vars)
 	vars["stage"] = stageName
 
+	resolved.KubeContext, err = bindVars(stage.KubeContext, vars)
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("unable to parse kubecontext %s ", stage.KubeContext), err)
+	}
 	if len(target.ValueFiles) > 0 {
 		for i, template := range target.ValueFiles {
 			o, err := bindVars(template, vars)
@@ -185,6 +193,8 @@ func (h *HelmManager) CreateHelmCommand(resolved *Resolved) (*Command, error) {
 
 	cmd := NewCommand(args)
 
+	cmd.Dir = h.dir
+
 	if resolved.AtomicUpdate {
 		cmd.AddArg("--atomic")
 	}
@@ -203,7 +213,7 @@ func (h *HelmManager) CreateHelmCommand(resolved *Resolved) (*Command, error) {
 	return cmd, nil
 }
 
-var VarRegexp = regexp.MustCompile(`\$\{(\w+)\}`)
+var VarRegexp = regexp.MustCompile(`\$\{([:\w]+)\}`)
 
 func bindVars(s string, vars map[string]string) (string, error) {
 	vv := VarRegexp.FindAllStringSubmatch(s, -1)
@@ -212,11 +222,21 @@ func bindVars(s string, vars map[string]string) (string, error) {
 	}
 	out := s
 	for _, v := range vv {
+		var value string
 		ref := v[0]
 		name := v[1]
-		value, ok := vars[name]
-		if !ok {
-			return s, fmt.Errorf("unknown var %s", name)
+		if cfgPkg.IsEnvVar(name) {
+			var err error
+			value, err = cfgPkg.ParseEnvVar(name)
+			if err != nil {
+				return s, err
+			}
+		} else {
+			var ok bool
+			value, ok = vars[name]
+			if !ok {
+				return s, fmt.Errorf("unknown var '%s'", name)
+			}
 		}
 		out = strings.Replace(out, ref, value, -1)
 	}
