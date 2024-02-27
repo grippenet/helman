@@ -12,12 +12,23 @@ version: 1
   #hooks:
 
 builds:
-  - env:
+  
+  - 
+    main: ./cmd/helman
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+    ignore:
+      - goos: darwin
+        goarch: '386'
+      - goos: linux
+        goarch: arm
+        goarm: 7
 
 archives:
   - format: tar.gz
