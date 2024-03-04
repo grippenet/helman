@@ -7,6 +7,8 @@ It's also possible to define extra argument to pass to helm.
 
 The goal of helman is to provide a simple way to reproduce command, and share a way to organize value files by enabling naming convention.
 
+Helman aims at cover simple use cases. If you want to cover more complex cases or a complete tool you can have a look to [Helmfile](https://github.com/helmfile/helmfile).
+
 ## Runnning helman
 
 Helman provides several commands to run an helm command with arguments built from the target configuration.
